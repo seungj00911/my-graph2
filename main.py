@@ -21,6 +21,7 @@ df["genre_first"] = (
 
 # 숫자형으로 변환
 df["total_audi"] = pd.to_numeric(df["total_audi"], errors="coerce")
+df["first_scrn"] = pd.to_numeric(df["first_scrn"], errors="coerce")
 
 
 # =============================
@@ -98,12 +99,15 @@ fig3 = px.histogram(
     x="total_audi",
     nbins=20,
     title="영화별 총 관객수 분포",
-    labels={"total_audi": "총 관객수", "count": "영화 편수"}
+    labels={
+        "total_audi": "총 관객수",
+        "count": "영화 편수"
+    }
 )
 
 fig3.update_traces(
     hovertemplate=(
-        "총 관객수 구간: %{x}<br>"
+        "총 관객수: %{x}<br>"
         "영화 편수: %{y}편"
         "<extra></extra>"
     )
@@ -111,14 +115,7 @@ fig3.update_traces(
 
 st.plotly_chart(fig3, use_container_width=True)
 
-# 대부분의 영화가 몰려 있는 구간 계산
-counts, bins = pd.cut(
-    hist_df["total_audi"],
-    bins=20,
-    include_lowest=True,
-    retbins=True
-), None
-
+# 가장 많이 몰려 있는 구간
 bin_counts = hist_df["total_audi"].groupby(
     pd.cut(hist_df["total_audi"], bins=20, include_lowest=True)
 ).size()
@@ -132,10 +129,52 @@ max_audience = int(max_row["total_audi"])
 
 st.markdown(
     f"**이 그래프로 알 수 있는 것:** "
-    f"대부분의 영화는 **{most_common_bin.left:,.0f}명 ~ {most_common_bin.right:,.0f}명** "
-    f"구간에 몰려 있다. "
+    f"대부분의 영화는 **{most_common_bin.left:,.0f}명 ~ "
+    f"{most_common_bin.right:,.0f}명** 구간에 몰려 있다. "
     f"가장 관객이 많은 영화는 **{max_movie}**로, "
     f"총 **{max_audience:,}명**의 관객을 기록했다."
+)
+
+st.divider()
+
+
+# =============================
+# 4. 개봉일 스크린수와 총 관객의 관계
+# =============================
+st.header("4. 개봉일 스크린수와 총 관객의 관계")
+
+scatter_df = df.dropna(
+    subset=["first_scrn", "total_audi", "movieNm", "genre_first"]
+).copy()
+
+fig4 = px.scatter(
+    scatter_df,
+    x="first_scrn",
+    y="total_audi",
+    color="genre_first",
+    hover_name="movieNm",
+    title="개봉일 스크린수와 총 관객의 관계",
+    labels={
+        "first_scrn": "개봉일 스크린수",
+        "total_audi": "총 관객수",
+        "genre_first": "장르"
+    }
+)
+
+fig4.update_traces(
+    hovertemplate=(
+        "<b>%{hovertext}</b><br>"
+        "개봉일 스크린수: %{x:,}개<br>"
+        "총 관객수: %{y:,}명"
+        "<extra></extra>"
+    )
+)
+
+st.plotly_chart(fig4, use_container_width=True)
+
+st.markdown(
+    "**이 그래프로 알 수 있는 것:** "
+    "개봉일에 확보한 스크린 수와 영화의 총 관객 수가 어떤 관계를 보이는지 비교할 수 있다."
 )
 
 st.divider()
