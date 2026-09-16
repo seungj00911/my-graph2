@@ -1,7 +1,6 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
 st.set_page_config(page_title="영화 데이터 그래프 도감 2 - 분포와 관계")
 
@@ -24,9 +23,9 @@ df["genre_first"] = (
 df["total_audi"] = pd.to_numeric(df["total_audi"], errors="coerce")
 
 
-# -----------------------------
+# =============================
 # 1. 장르별 영화 편수
-# -----------------------------
+# =============================
 st.header("1. 장르별 영화 편수")
 
 genre_count = df["genre_first"].value_counts().reset_index()
@@ -55,9 +54,9 @@ st.markdown(
 st.divider()
 
 
-# -----------------------------
+# =============================
 # 2. 장르별 영화 총 관객 트리맵
-# -----------------------------
+# =============================
 st.header("2. 장르별 영화 총 관객")
 
 treemap_df = df.dropna(subset=["total_audi"]).copy()
@@ -82,6 +81,61 @@ st.plotly_chart(fig2, use_container_width=True)
 st.markdown(
     "**이 그래프로 알 수 있는 것:** "
     "각 장르에 어떤 영화가 포함되어 있고, 영화별 총 관객 규모가 얼마나 다른지 알 수 있다."
+)
+
+st.divider()
+
+
+# =============================
+# 3. 총 관객수 히스토그램
+# =============================
+st.header("3. 총 관객수 분포")
+
+hist_df = df.dropna(subset=["total_audi"]).copy()
+
+fig3 = px.histogram(
+    hist_df,
+    x="total_audi",
+    nbins=20,
+    title="영화별 총 관객수 분포",
+    labels={"total_audi": "총 관객수", "count": "영화 편수"}
+)
+
+fig3.update_traces(
+    hovertemplate=(
+        "총 관객수 구간: %{x}<br>"
+        "영화 편수: %{y}편"
+        "<extra></extra>"
+    )
+)
+
+st.plotly_chart(fig3, use_container_width=True)
+
+# 대부분의 영화가 몰려 있는 구간 계산
+counts, bins = pd.cut(
+    hist_df["total_audi"],
+    bins=20,
+    include_lowest=True,
+    retbins=True
+), None
+
+bin_counts = hist_df["total_audi"].groupby(
+    pd.cut(hist_df["total_audi"], bins=20, include_lowest=True)
+).size()
+
+most_common_bin = bin_counts.idxmax()
+
+# 가장 관객이 많은 영화
+max_row = hist_df.loc[hist_df["total_audi"].idxmax()]
+max_movie = max_row["movieNm"]
+max_audience = int(max_row["total_audi"])
+
+st.markdown(
+    f"**이 그래프로 알 수 있는 것:** "
+    f"대부분의 영화는 **{most_common_bin.left:,.0f}명 ~ {most_common_bin.right:,.0f}명** "
+    f"구간에 몰려 있다. "
+    f"가장 관객이 많은 영화는 **{max_movie}**로, "
+    f"총 **{max_audience:,}명**의 관객을 기록했다."
 )
 
 st.divider()
