@@ -22,6 +22,7 @@ df["genre_first"] = (
 # 숫자형으로 변환
 df["total_audi"] = pd.to_numeric(df["total_audi"], errors="coerce")
 df["first_scrn"] = pd.to_numeric(df["first_scrn"], errors="coerce")
+df["first_week_audi"] = pd.to_numeric(df["first_week_audi"], errors="coerce")
 
 
 # =============================
@@ -42,7 +43,12 @@ fig1 = px.pie(
 
 fig1.update_traces(
     textinfo="percent",
-    hovertemplate="<b>%{label}</b><br>편수: %{value}편<br>비율: %{percent}<extra></extra>"
+    hovertemplate=(
+        "<b>%{label}</b><br>"
+        "편수: %{value}편<br>"
+        "비율: %{percent}"
+        "<extra></extra>"
+    )
 )
 
 st.plotly_chart(fig1, use_container_width=True)
@@ -60,7 +66,9 @@ st.divider()
 # =============================
 st.header("2. 장르별 영화 총 관객")
 
-treemap_df = df.dropna(subset=["total_audi"]).copy()
+treemap_df = df.dropna(
+    subset=["total_audi"]
+).copy()
 
 fig2 = px.treemap(
     treemap_df,
@@ -92,7 +100,9 @@ st.divider()
 # =============================
 st.header("3. 총 관객수 분포")
 
-hist_df = df.dropna(subset=["total_audi"]).copy()
+hist_df = df.dropna(
+    subset=["total_audi"]
+).copy()
 
 fig3 = px.histogram(
     hist_df,
@@ -116,12 +126,19 @@ fig3.update_traces(
 st.plotly_chart(fig3, use_container_width=True)
 
 bin_counts = hist_df["total_audi"].groupby(
-    pd.cut(hist_df["total_audi"], bins=20, include_lowest=True)
+    pd.cut(
+        hist_df["total_audi"],
+        bins=20,
+        include_lowest=True
+    )
 ).size()
 
 most_common_bin = bin_counts.idxmax()
 
-max_row = hist_df.loc[hist_df["total_audi"].idxmax()]
+max_row = hist_df.loc[
+    hist_df["total_audi"].idxmax()
+]
+
 max_movie = max_row["movieNm"]
 max_audience = int(max_row["total_audi"])
 
@@ -142,7 +159,12 @@ st.divider()
 st.header("4. 개봉일 스크린수와 총 관객의 관계")
 
 scatter_df = df.dropna(
-    subset=["first_scrn", "total_audi", "movieNm", "genre_first"]
+    subset=[
+        "first_scrn",
+        "total_audi",
+        "movieNm",
+        "genre_first"
+    ]
 ).copy()
 
 fig4 = px.scatter(
@@ -184,13 +206,19 @@ st.divider()
 st.header("5. 장르별 총 관객수 분포")
 
 box_df = df.dropna(
-    subset=["genre_first", "total_audi", "movieNm"]
+    subset=[
+        "genre_first",
+        "total_audi",
+        "movieNm"
+    ]
 ).copy()
 
 # 영화가 10편 이상인 장르만 선택
 genre_counts = box_df["genre_first"].value_counts()
 
-valid_genres = genre_counts[genre_counts >= 10].index
+valid_genres = genre_counts[
+    genre_counts >= 10
+].index
 
 box_df = box_df[
     box_df["genre_first"].isin(valid_genres)
@@ -222,7 +250,61 @@ st.plotly_chart(fig5, use_container_width=True)
 
 st.markdown(
     "**이 그래프로 알 수 있는 것:** "
-    "영화가 10편 이상인 장르별로 총 관객수의 분포와 장르 안에서 유난히 관객수가 많은 영화를 확인할 수 있다."
+    "영화가 10편 이상인 장르별로 총 관객수의 분포와 "
+    "유난히 관객수가 많은 영화를 확인할 수 있다."
+)
+
+st.divider()
+
+
+# =============================
+# 6. 첫 주 관객을 크기로 나타낸 버블 그래프
+# =============================
+st.header("6. 개봉일 스크린수·총 관객·첫 주 관객의 관계")
+
+bubble_df = df.dropna(
+    subset=[
+        "first_scrn",
+        "total_audi",
+        "first_week_audi",
+        "movieNm",
+        "genre_first"
+    ]
+).copy()
+
+fig6 = px.scatter(
+    bubble_df,
+    x="first_scrn",
+    y="total_audi",
+    size="first_week_audi",
+    color="genre_first",
+    hover_name="movieNm",
+    size_max=50,
+    title="개봉일 스크린수와 총 관객의 관계 (첫 주 관객 버블)",
+    labels={
+        "first_scrn": "개봉일 스크린수",
+        "total_audi": "총 관객수",
+        "first_week_audi": "첫 주 관객",
+        "genre_first": "장르"
+    }
+)
+
+fig6.update_traces(
+    hovertemplate=(
+        "<b>%{hovertext}</b><br>"
+        "개봉일 스크린수: %{x:,}개<br>"
+        "총 관객수: %{y:,}명<br>"
+        "첫 주 관객: %{marker.size:,}명"
+        "<extra></extra>"
+    )
+)
+
+st.plotly_chart(fig6, use_container_width=True)
+
+st.markdown(
+    "**이 그래프로 알 수 있는 것:** "
+    "개봉일 스크린수와 총 관객의 관계를 확인하면서 "
+    "첫 주 관객이 많은 영화가 어떤 크기로 나타나는지 함께 비교할 수 있다."
 )
 
 st.divider()
