@@ -115,14 +115,12 @@ fig3.update_traces(
 
 st.plotly_chart(fig3, use_container_width=True)
 
-# 가장 많이 몰려 있는 구간
 bin_counts = hist_df["total_audi"].groupby(
     pd.cut(hist_df["total_audi"], bins=20, include_lowest=True)
 ).size()
 
 most_common_bin = bin_counts.idxmax()
 
-# 가장 관객이 많은 영화
 max_row = hist_df.loc[hist_df["total_audi"].idxmax()]
 max_movie = max_row["movieNm"]
 max_audience = int(max_row["total_audi"])
@@ -175,6 +173,56 @@ st.plotly_chart(fig4, use_container_width=True)
 st.markdown(
     "**이 그래프로 알 수 있는 것:** "
     "개봉일에 확보한 스크린 수와 영화의 총 관객 수가 어떤 관계를 보이는지 비교할 수 있다."
+)
+
+st.divider()
+
+
+# =============================
+# 5. 장르별 총 관객수 상자 그림
+# =============================
+st.header("5. 장르별 총 관객수 분포")
+
+box_df = df.dropna(
+    subset=["genre_first", "total_audi", "movieNm"]
+).copy()
+
+# 영화가 10편 이상인 장르만 선택
+genre_counts = box_df["genre_first"].value_counts()
+
+valid_genres = genre_counts[genre_counts >= 10].index
+
+box_df = box_df[
+    box_df["genre_first"].isin(valid_genres)
+].copy()
+
+fig5 = px.box(
+    box_df,
+    x="genre_first",
+    y="total_audi",
+    color="genre_first",
+    points="outliers",
+    hover_name="movieNm",
+    title="영화가 10편 이상인 장르의 총 관객수 분포",
+    labels={
+        "genre_first": "장르",
+        "total_audi": "총 관객수"
+    }
+)
+
+fig5.update_traces(
+    hovertemplate=(
+        "<b>%{hovertext}</b><br>"
+        "총 관객수: %{y:,}명"
+        "<extra></extra>"
+    )
+)
+
+st.plotly_chart(fig5, use_container_width=True)
+
+st.markdown(
+    "**이 그래프로 알 수 있는 것:** "
+    "영화가 10편 이상인 장르별로 총 관객수의 분포와 장르 안에서 유난히 관객수가 많은 영화를 확인할 수 있다."
 )
 
 st.divider()
