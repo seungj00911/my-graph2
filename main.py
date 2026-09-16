@@ -1,0 +1,46 @@
+import streamlit as st
+import pandas as pd
+import plotly.express as px
+
+st.set_page_config(page_title="영화 데이터 그래프 도감 2 - 분포와 관계")
+
+st.title("영화 데이터 그래프 도감 2 - 분포와 관계")
+
+# 데이터 불러오기
+url = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_movies.csv"
+df = pd.read_csv(url)
+
+# 여러 장르가 있는 경우 첫 번째 장르만 사용
+df["genre_first"] = df["genre"].fillna("장르 미상").astype(str).str.split("|").str[0]
+
+# -----------------------------
+# 1. 장르별 영화 편수
+# -----------------------------
+st.header("1. 장르별 영화 편수")
+
+genre_count = (
+    df["genre_first"]
+    .value_counts()
+    .reset_index()
+)
+
+genre_count.columns = ["장르", "영화 편수"]
+
+fig = px.pie(
+    genre_count,
+    names="장르",
+    values="영화 편수",
+    hole=0.45,
+    title="장르별 영화 편수"
+)
+
+fig.update_traces(
+    textinfo="percent",
+    hovertemplate="<b>%{label}</b><br>편수: %{value}편<br>비율: %{percent}<extra></extra>"
+)
+
+st.plotly_chart(fig, use_container_width=True)
+
+st.markdown("**이 그래프로 알 수 있는 것:** 어떤 장르의 영화가 1년간 박스오피스 10위권에 가장 많이 포함되었는지 알 수 있다.")
+
+st.divider()
