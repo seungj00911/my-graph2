@@ -2,15 +2,18 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-st.set_page_config(page_title="영화 데이터 그래프 도감 2 - 분포와 관계")
+st.set_page_config(
+    page_title="영화 데이터 그래프 도감 2 - 분포와 관계",
+    layout="wide"
+)
 
 st.title("영화 데이터 그래프 도감 2 - 분포와 관계")
 
-# 데이터 불러오기
 url = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_movies.csv"
+
 df = pd.read_csv(url)
 
-# 여러 장르가 있으면 첫 번째 장르만 사용
+# 장르는 첫 번째 장르만 사용
 df["genre_first"] = (
     df["genre"]
     .fillna("장르 미상")
@@ -22,14 +25,14 @@ df["genre_first"] = (
 # 숫자형으로 변환
 df["total_audi"] = pd.to_numeric(df["total_audi"], errors="coerce")
 df["first_scrn"] = pd.to_numeric(df["first_scrn"], errors="coerce")
-df["first_week_audi"] = pd.to_numeric(
-    df["first_week_audi"], errors="coerce"
-)
+df["first_week_audi"] = pd.to_numeric(df["first_week_audi"], errors="coerce")
+df["days_in_top10"] = pd.to_numeric(df["days_in_top10"], errors="coerce")
 
 
-# =============================
+# =========================================================
 # 1. 장르별 영화 편수
-# =============================
+# =========================================================
+
 st.header("1. 장르별 영화 편수")
 
 genre_count = df["genre_first"].value_counts().reset_index()
@@ -48,8 +51,7 @@ fig1.update_traces(
     hovertemplate=(
         "<b>%{label}</b><br>"
         "편수: %{value}편<br>"
-        "비율: %{percent}"
-        "<extra></extra>"
+        "비율: %{percent}<extra></extra>"
     )
 )
 
@@ -63,14 +65,13 @@ st.markdown(
 st.divider()
 
 
-# =============================
-# 2. 장르별 영화 총 관객 트리맵
-# =============================
+# =========================================================
+# 2. 장르 → 영화 총 관객 트리맵
+# =========================================================
+
 st.header("2. 장르별 영화 총 관객")
 
-treemap_df = df.dropna(
-    subset=["total_audi"]
-).copy()
+treemap_df = df.dropna(subset=["total_audi"]).copy()
 
 fig2 = px.treemap(
     treemap_df,
@@ -91,20 +92,20 @@ st.plotly_chart(fig2, use_container_width=True)
 
 st.markdown(
     "**이 그래프로 알 수 있는 것:** "
-    "각 장르에 어떤 영화가 포함되어 있고, 영화별 총 관객 규모가 얼마나 다른지 알 수 있다."
+    "각 장르에 어떤 영화가 포함되어 있고, "
+    "영화별 총 관객 규모가 얼마나 다른지 알 수 있다."
 )
 
 st.divider()
 
 
-# =============================
-# 3. 총 관객수 히스토그램
-# =============================
-st.header("3. 총 관객수 분포")
+# =========================================================
+# 3. 총 관객수 분포
+# =========================================================
 
-hist_df = df.dropna(
-    subset=["total_audi"]
-).copy()
+st.header("3. 영화별 총 관객수 분포")
+
+hist_df = df.dropna(subset=["total_audi"]).copy()
 
 fig3 = px.histogram(
     hist_df,
@@ -137,10 +138,7 @@ bin_counts = hist_df["total_audi"].groupby(
 
 most_common_bin = bin_counts.idxmax()
 
-max_row = hist_df.loc[
-    hist_df["total_audi"].idxmax()
-]
-
+max_row = hist_df.loc[hist_df["total_audi"].idxmax()]
 max_movie = max_row["movieNm"]
 max_audience = int(max_row["total_audi"])
 
@@ -155,9 +153,10 @@ st.markdown(
 st.divider()
 
 
-# =============================
+# =========================================================
 # 4. 개봉일 스크린수와 총 관객의 관계
-# =============================
+# =========================================================
+
 st.header("4. 개봉일 스크린수와 총 관객의 관계")
 
 scatter_df = df.dropna(
@@ -196,15 +195,17 @@ st.plotly_chart(fig4, use_container_width=True)
 
 st.markdown(
     "**이 그래프로 알 수 있는 것:** "
-    "개봉일에 확보한 스크린 수와 영화의 총 관객 수가 어떤 관계를 보이는지 비교할 수 있다."
+    "개봉일에 확보한 스크린 수와 영화의 총 관객 수가 "
+    "어떤 관계를 보이는지 비교할 수 있다."
 )
 
 st.divider()
 
 
-# =============================
-# 5. 장르별 총 관객수 상자 그림
-# =============================
+# =========================================================
+# 5. 장르별 총 관객수 분포
+# =========================================================
+
 st.header("5. 장르별 총 관객수 분포")
 
 box_df = df.dropna(
@@ -258,10 +259,11 @@ st.markdown(
 st.divider()
 
 
-# =============================
+# =========================================================
 # 6. 첫 주 관객을 크기로 나타낸 버블 그래프
-# =============================
-st.header("6. 개봉일 스크린수·총 관객·첫 주 관객의 관계")
+# =========================================================
+
+st.header("6. 개봉일 스크린수와 총 관객의 관계 - 버블")
 
 bubble_df = df.dropna(
     subset=[
@@ -290,12 +292,14 @@ fig6 = px.scatter(
     }
 )
 
+# 원래 첫 주 관객 값을 customdata에 넣어서 표시
 fig6.update_traces(
+    customdata=bubble_df[["first_week_audi"]].values,
     hovertemplate=(
         "<b>%{hovertext}</b><br>"
         "개봉일 스크린수: %{x:,}개<br>"
         "총 관객수: %{y:,}명<br>"
-        "첫 주 관객: %{marker.size:,}명"
+        "첫 주 관객: %{customdata[0]:,.0f}명"
         "<extra></extra>"
     )
 )
@@ -305,32 +309,42 @@ st.plotly_chart(fig6, use_container_width=True)
 st.markdown(
     "**이 그래프로 알 수 있는 것:** "
     "개봉일 스크린수와 총 관객의 관계를 확인하면서 "
-    "첫 주 관객이 많은 영화가 어떤 크기로 나타나는지 함께 비교할 수 있다."
+    "첫 주 관객이 많은 영화가 어떤 크기로 나타나는지 "
+    "함께 비교할 수 있다."
 )
 
 st.divider()
 
 
-# =============================
-# 7. 제작 국가 → 장르 선버스트
-# =============================
-st.header("7. 제작 국가별 장르 분포")
+# =========================================================
+# 7. 제작 국가 → 장르별 영화 편수
+# =========================================================
+
+st.header("7. 제작 국가 → 장르별 영화 편수")
 
 sunburst_df = df.dropna(
-    subset=["nation", "genre_first"]
+    subset=[
+        "nation",
+        "genre_first"
+    ]
 ).copy()
 
-# 제작 국가와 장르별 영화 편수 계산
 sunburst_count = (
     sunburst_df
-    .groupby(["nation", "genre_first"])
+    .groupby([
+        "nation",
+        "genre_first"
+    ])
     .size()
     .reset_index(name="영화 편수")
 )
 
 fig7 = px.sunburst(
     sunburst_count,
-    path=["nation", "genre_first"],
+    path=[
+        "nation",
+        "genre_first"
+    ],
     values="영화 편수",
     title="제작 국가 → 장르별 영화 편수"
 )
@@ -351,3 +365,81 @@ st.markdown(
 )
 
 st.divider()
+
+
+# =========================================================
+# 8. TOP10 생존일수 TOP 15
+# =========================================================
+
+st.header("8. TOP10에서 오래 살아남은 영화 TOP 15")
+
+survival_df = df.dropna(
+    subset=[
+        "movieNm",
+        "days_in_top10"
+    ]
+).copy()
+
+# 같은 영화가 있다면 가장 긴 기록만 사용
+survival_df = (
+    survival_df
+    .groupby("movieNm", as_index=False)["days_in_top10"]
+    .max()
+)
+
+# 오래 TOP10에 있었던 영화 15개
+top15 = (
+    survival_df
+    .sort_values(
+        "days_in_top10",
+        ascending=False
+    )
+    .head(15)
+    .sort_values(
+        "days_in_top10",
+        ascending=True
+    )
+)
+
+fig8 = px.bar(
+    top15,
+    x="days_in_top10",
+    y="movieNm",
+    orientation="h",
+    title="TOP10에 오래 머문 영화 TOP 15",
+    labels={
+        "days_in_top10": "TOP10 유지 일수",
+        "movieNm": "영화"
+    },
+    text="days_in_top10"
+)
+
+fig8.update_traces(
+    texttemplate="%{text}일",
+    textposition="outside",
+    hovertemplate=(
+        "<b>%{y}</b><br>"
+        "TOP10 유지: %{x}일"
+        "<extra></extra>"
+    )
+)
+
+fig8.update_layout(
+    height=600,
+    yaxis={
+        "categoryorder": "total ascending"
+    }
+)
+
+st.plotly_chart(fig8, use_container_width=True)
+
+# 가장 오래 머문 영화
+longest_movie = top15.iloc[-1]["movieNm"]
+longest_days = int(top15.iloc[-1]["days_in_top10"])
+
+st.markdown(
+    f"**이 그래프로 알 수 있는 것:** "
+    f"영화가 박스오피스 TOP10에 얼마나 오래 머물렀는지 비교할 수 있다. "
+    f"가장 오래 TOP10에 머문 영화는 **{longest_movie}**로 "
+    f"**{longest_days}일** 동안 TOP10에 포함되어 있었다."
+)
